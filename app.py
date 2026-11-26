@@ -382,6 +382,45 @@ def users_toggle(uid):
     return redirect(url_for("users"))
 
 
+@app.route("/users/delete/<int:uid>", methods=["POST"])
+@login_required("superadmin")
+def users_delete(uid):
+    """最高權限刪除離職人員帳號（連帶清掉排班/請假/訊息/頭貼紀錄）。"""
+    db = get_db()
+    row = db.execute(
+        "SELECT role, full_name, avatar, active FROM users WHERE id=?", (uid,)).fetchone()
+    if not row:
+        db.close()
+        return redirect(url_for("users"))
+    if row["role"] == "superadmin":
+        db.close()
+        flash(t("cannot_delete_super", session.get("lang", "zh")), "warning")
+        return redirect(url_for("users"))
+    if row["active"]:
+        db.close()
+        flash(t("delete_inactive_only", session.get("lang", "zh")), "warning")
+        return redirect(url_for("users"))
+    # 先清關聯資料，再刪本人
+    db.execute("DELETE FROM schedules WHERE user_id=?", (uid,))
+    db.execute("DELETE FROM leave_requests WHERE user_id=?", (uid,))
+    db.execute("DELETE FROM message_reads WHERE user_id=?", (uid,))
+    db.execute("DELETE FROM avatar_requests WHERE user_id=?", (uid,))
+    db.execute("DELETE FROM messages WHERE sender_id=? OR recipient_id=?", (uid, uid))
+    db.execute("UPDATE login_logs SET user_id=NULL WHERE user_id=?", (uid,))
+    db.execute("UPDATE schedules SET created_by=NULL WHERE created_by=?", (uid,))
+    db.execute("DELETE FROM users WHERE id=?", (uid,))
+    db.commit()
+    db.close()
+    if row["avatar"]:
+        try:
+            (AVATAR_DIR / row["avatar"]).unlink(missing_ok=True)
+        except Exception:
+            pass
+    flash(t("user_deleted", session.get("lang", "zh")).format(
+        name=row["full_name"]), "success")
+    return redirect(url_for("users"))
+
+
 # ---------- 航班資訊 ----------
 
 @app.route("/flights")
