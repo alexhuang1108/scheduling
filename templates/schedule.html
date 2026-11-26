@@ -11,9 +11,14 @@
     <a href="{{ url_for('schedule_export', date=date) }}" class="btn btn-green">📥 {{ T('export_excel') }}</a>
     {% endif %}
   </form>
+  <div class="form-row" style="margin-top:8px;">
+    <a href="{{ url_for('schedule', date=date, view='day') }}" class="btn {{ 'btn-blue' if view=='day' else 'btn-gray' }}">📅 {{ T('view_day') }}</a>
+    <a href="{{ url_for('schedule', date=date, view='week') }}" class="btn {{ 'btn-blue' if view=='week' else 'btn-gray' }}">🗓 {{ T('view_week') }}</a>
+    <a href="{{ url_for('schedule', date=date, view='month') }}" class="btn {{ 'btn-blue' if view=='month' else 'btn-gray' }}">🈷️ {{ T('view_month') }}</a>
+  </div>
 </div>
 
-{% if is_admin %}
+{% if is_admin and view == 'day' %}
 <div class="card">
   <h2>{{ T('add_schedule') }}（{{ date }}）</h2>
   <form method="post" action="{{ url_for('schedule_add') }}" class="form-row">
@@ -31,36 +36,72 @@
 {% endif %}
 
 <div class="card">
-  <h2>{{ date }}</h2>
-  <div class="table-wrap">
+  <h2>
+    {% if view == 'day' %}{{ date }}
+    {% elif view == 'week' %}{{ day_meta[0]['iso'] }} ~ {{ day_meta[6]['iso'] }}（{{ T('week_view') }}）
+    {% else %}{{ date[:7] }}（{{ T('month_view') }}）{% endif %}
+  </h2>
+  <div class="table-wrap" style="overflow-x:auto;">
   <table>
     <thead>
     <tr>
-      <th>{{ T('employee') }}</th>
-      {% for sh in shifts %}
-      <th class="grid-shift"><span class="badge" style="background:{{ sh.color }}">{{ sh.name }}</span><br>
-        <span class="muted" style="font-weight:400;">{{ sh.start_time }}-{{ sh.end_time }}</span></th>
-      {% endfor %}
+      <th style="position:sticky;left:0;background:var(--card,#fff);z-index:2;">{{ T('employee') }}</th>
+      {% if view == 'day' %}
+        {% for sh in shifts %}
+        <th class="grid-shift"><span class="badge" style="background:{{ sh.color }}">{{ sh.name }}</span><br>
+          <span class="muted" style="font-weight:400;">{{ sh.start_time }}-{{ sh.end_time }}</span></th>
+        {% endfor %}
+      {% else %}
+        {% for dm in day_meta %}
+        <th class="grid-shift" style="{{ 'background:#fef3c7;' if dm.is_weekend else '' }}">
+          {{ dm.label }}<br><span class="muted" style="font-weight:400;">{{ dm.weekday }}</span></th>
+        {% endfor %}
+      {% endif %}
     </tr>
     </thead>
     <tbody>
     {% for s in staff %}
     <tr>
-      <td>{{ s.full_name }}<br><span class="muted">{{ s.employee_no }} · {{ s.department }}</span></td>
-      {% for sh in shifts %}
-        {% set cell = grid.get(s.id, {}).get(sh.id) %}
-        <td class="grid-shift">
-          {% if cell %}
-            <span class="badge" style="background:{{ sh.color }}">{{ sh.name }}</span>
-            {% if cell.flight_no %}<div class="muted">{{ cell.flight_no }}</div>{% endif %}
-            {% if is_admin %}
-            <div style="margin-top:4px;"><a href="{{ url_for('schedule_delete', sid=cell['id']) }}" class="btn btn-red btn-sm">🗑 {{ T('delete') }}</a></div>
+      <td style="position:sticky;left:0;background:var(--card,#fff);z-index:1;white-space:nowrap;">
+        {{ s.full_name }}<br><span class="muted">{{ s.employee_no }} · {{ s.department }}</span></td>
+      {% if view == 'day' %}
+        {% for sh in shifts %}
+          {% set cell = grid.get(s.id, {}).get(date, {}).get(sh.id) %}
+          <td class="grid-shift">
+            {% if cell %}
+              <span class="badge" style="background:{{ sh.color }}">{{ sh.name }}</span>
+              {% if cell.flight_no %}<div class="muted">{{ cell.flight_no }}</div>{% endif %}
+              {% if is_admin %}
+              <div style="margin-top:4px;"><a href="{{ url_for('schedule_delete', sid=cell['id']) }}" class="btn btn-red btn-sm">🗑 {{ T('delete') }}</a></div>
+              {% endif %}
+            {% else %}
+              <span class="muted">—</span>
             {% endif %}
-          {% else %}
-            <span class="muted">—</span>
-          {% endif %}
-        </td>
-      {% endfor %}
+          </td>
+        {% endfor %}
+      {% else %}
+        {% for dm in day_meta %}
+          {% set daycells = grid.get(s.id, {}).get(dm.iso, {}) %}
+          <td class="grid-shift" style="{{ 'background:#fef9e7;' if dm.is_weekend else '' }}">
+            {% if daycells %}
+              {% for sh in shifts %}
+                {% set cell = daycells.get(sh.id) %}
+                {% if cell %}
+                <div>
+                  <span class="badge" style="background:{{ sh.color }}">{{ sh.name }}</span>
+                  {% if cell.flight_no %}<div class="muted">{{ cell.flight_no }}</div>{% endif %}
+                  {% if is_admin %}
+                  <a href="{{ url_for('schedule_delete', sid=cell['id']) }}" class="btn btn-red btn-sm">🗑</a>
+                  {% endif %}
+                </div>
+                {% endif %}
+              {% endfor %}
+            {% else %}
+              <span class="muted">—</span>
+            {% endif %}
+          </td>
+        {% endfor %}
+      {% endif %}
     </tr>
     {% endfor %}
     </tbody>

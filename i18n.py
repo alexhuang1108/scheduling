@@ -120,6 +120,11 @@ I18N = {
     "shift_periods": {"zh": "班次時段", "en": "Shift periods", "ja": "シフト時間帯"},
 
     "schedule": {"zh": "總排班表", "en": "Master schedule", "ja": "配属表"},
+    "view_day": {"zh": "日班表", "en": "Day", "ja": "日別"},
+    "view_week": {"zh": "週班表", "en": "Week", "ja": "週別"},
+    "view_month": {"zh": "月班表", "en": "Month", "ja": "月別"},
+    "week_view": {"zh": "週班表", "en": "Weekly view", "ja": "週別表示"},
+    "month_view": {"zh": "月班表", "en": "Monthly view", "ja": "月別表示"},
     "date": {"zh": "日期", "en": "Date", "ja": "日付"},
     "view": {"zh": "查看", "en": "View", "ja": "表示"},
     "add_schedule": {"zh": "新增排班", "en": "Add shift", "ja": "配属を追加"},

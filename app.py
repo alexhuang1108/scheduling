@@ -192,26 +192,61 @@ def index():
 
 # ---------- 班表 ----------
 
+WEEKDAYS_ZH = ["週一", "週二", "週三", "週四", "週五", "週六", "週日"]
+WEEKDAYS_EN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+WEEKDAYS_JA = ["月", "火", "水", "木", "金", "土", "日"]
+
+
 @app.route("/schedule")
 @login_required()
 def schedule():
     d = request.args.get("date", date.today().isoformat())
+    view = request.args.get("view", "day")
+    if view not in ("day", "week", "month"):
+        view = "day"
     db = get_db()
     shifts = db.execute("SELECT * FROM shifts WHERE active=1 ORDER BY start_time").fetchall()
     staff = db.execute(
         "SELECT * FROM users WHERE role='staff' AND active=1 ORDER BY full_name").fetchall()
+
+    base = date.fromisoformat(d)
+
+    # 決定要顯示的日期範圍
+    if view == "day":
+        days = [base]
+    elif view == "week":
+        monday = base - timedelta(days=base.weekday())
+        days = [monday + timedelta(days=i) for i in range(7)]
+    else:  # month
+        days = []
+        cur = base.replace(day=1)
+        while cur.month == base.month:
+            days.append(cur)
+            cur += timedelta(days=1)
+
+    dmin, dmax = days[0].isoformat(), days[-1].isoformat()
     rows = db.execute(
-        """SELECT s.id, s.user_id, s.shift_id, s.note, sh.name AS shift_name, sh.color,
-                  f.flight_no
+        """SELECT s.id, s.user_id, s.shift_id, s.date, s.note,
+                  sh.name AS shift_name, sh.color, f.flight_no
            FROM schedules s JOIN shifts sh ON sh.id=s.shift_id
            LEFT JOIN flights f ON f.id=s.flight_id
-           WHERE s.date=?""", (d,)).fetchall()
+           WHERE s.date>=? AND s.date<=?""", (dmin, dmax)).fetchall()
     db.close()
+
+    # grid[user_id][date][shift_id] = row
     grid = {s["id"]: {} for s in staff}
     for r in rows:
-        grid.setdefault(r["user_id"], {})[r["shift_id"]] = r
-    return render_template("schedule.html", date=d, shifts=shifts,
-                           staff=staff, grid=grid)
+        grid.setdefault(r["user_id"], {}).setdefault(r["date"], {})[r["shift_id"]] = r
+
+    lang = session.get("lang", "zh")
+    weekdays = {"zh": WEEKDAYS_ZH, "en": WEEKDAYS_EN, "ja": WEEKDAYS_JA}.get(lang, WEEKDAYS_ZH)
+    day_meta = [{"iso": dd.isoformat(),
+                 "label": f"{dd.month}/{dd.day}",
+                 "weekday": weekdays[dd.weekday()],
+                 "is_weekend": dd.weekday() >= 5} for dd in days]
+
+    return render_template("schedule.html", date=d, view=view, shifts=shifts,
+                           staff=staff, grid=grid, day_meta=day_meta)
 
 
 @app.route("/schedule/export")
