@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: scheduling
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: SCHED_DB
+        value: /data/scheduling.db
+      - key: SCHED_DATA
+        value: /data
+    disk:
+      name: sched-data
+      mountPath: /data
+      sizeGB: 1

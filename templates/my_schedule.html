@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1><span class="ico">👤</span>{{ user.full_name }} {{ T('my_schedule') }}</h1></div>
+<div class="card">
+  {% if rows %}
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>{{ T('date') }}</th><th>{{ T('shift') }}</th><th>{{ T('time') }}</th><th>{{ T('flight') }}</th><th>{{ T('departure') }}</th><th>{{ T('arrival') }}</th><th>{{ T('terminal') }}/{{ T('gate') }}</th><th>{{ T('note') }}</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r.date }}</td>
+      <td><span class="badge" style="background:{{ r.color }}">{{ r.shift_name }}</span></td>
+      <td>{{ r.start_time }} – {{ r.end_time }}</td>
+      <td>{{ r.flight_no or '-' }}</td>
+      <td>
+        {% if r.dep_iata %}
+          {% if lang=='zh' %}{{ r.dep_iata }} {{ r.dep_name_zh }}
+          {% elif lang=='en' %}{{ r.dep_iata }} {{ r.dep_name_en }}
+          {% else %}{{ r.dep_iata }} {{ r.dep_name_ja }}{% endif %}
+        {% else %}-{% endif %}
+      </td>
+      <td>
+        {% if r.arr_iata %}
+          {% if lang=='zh' %}{{ r.arr_iata }} {{ r.arr_name_zh }}
+          {% elif lang=='en' %}{{ r.arr_iata }} {{ r.arr_name_en }}
+          {% else %}{{ r.arr_iata }} {{ r.arr_name_ja }}{% endif %}
+        {% else %}-{% endif %}
+      </td>
+      <td>{{ r.terminal or '-' }} / {{ r.gate or '-' }}</td>
+      <td>{{ r.note or '' }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="empty"><span class="big">🗓️</span>{{ T('no_records') }}</div>
+  {% endif %}
+</div>
+{% endblock %}

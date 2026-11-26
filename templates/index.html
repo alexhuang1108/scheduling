@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="background:linear-gradient(135deg,#1e3a5f,#2563eb); color:#fff; border:none;">
+  <h2 style="color:#fff; margin:0;">👋 {{ T('welcome_login', name=session.get('full_name')) }}</h2>
+  <p style="margin:6px 0 0; opacity:.9;">{{ T('welcome_greeting') }}</p>
+</div>
+
+<div class="page-head"><h1><span class="ico">📊</span>{{ T('dashboard') }}</h1></div>
+
+{% if is_admin %}
+<div class="card">
+  <h2>{{ T('today_overview') }}（{{ today }}）</h2>
+  <div class="stats">
+    <div class="stat-card"><div class="stat">{{ staff_count }}</div><div class="label">{{ T('staff_count') }}</div></div>
+    <div class="stat-card"><div class="stat">{{ today_sched|length }}</div><div class="label">{{ T('today_sched_count') }}</div></div>
+    <div class="stat-card"><div class="stat">{{ pending }}</div><div class="label">{{ T('pending_leave') }}</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>{{ T('today_schedule') }}</h2>
+  {% if today_sched %}
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>{{ T('full_name') }}</th><th>{{ T('shift') }}</th><th>{{ T('flight') }}</th></tr></thead>
+    <tbody>
+    {% for r in today_sched %}
+    <tr>
+      <td>{{ r.full_name }}</td>
+      <td><span class="badge" style="background:{{ r.color }}">{{ r.shift_name }}</span></td>
+      <td>{{ r.flight_no or '-' }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="empty"><span class="big">🗓️</span>{{ T('no_schedule_today') }}</div>
+  {% endif %}
+</div>
+{% else %}
+<div class="card">
+  <p>{{ T('welcome_staff') }}</p>
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>{{ T('shift_periods') }}</h2>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>{{ T('shift') }}</th><th>{{ T('time') }}</th></tr></thead>
+    <tbody>
+    {% for s in shifts %}
+    <tr>
+      <td><span class="badge" style="background:{{ s.color }}">{{ s.name }}</span></td>
+      <td>{{ s.start_time }} – {{ s.end_time }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

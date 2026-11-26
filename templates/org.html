@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1><span class="ico">🏢</span>{{ T('org_data') }}</h1></div>
+<p class="muted">{{ T('org_hint') }}</p>
+
+{% set labels = {'department': T('department'), 'unit': T('unit'), 'duty': T('duty'), 'job_title': T('job_title')} %}
+
+{% for k in kinds %}
+<div class="card">
+  <h2>{{ labels[k] }}</h2>
+  <form method="post" action="{{ url_for('org_add') }}" class="form-row" style="margin-bottom:12px;">
+    <input type="hidden" name="kind" value="{{ k }}">
+    <input name="name" placeholder="{{ T('org_add_hint') }}" required>
+    <button class="btn btn-green" type="submit">＋ {{ T('add') }}</button>
+  </form>
+  <div>
+    {% for it in items[k] %}
+      <span class="badge" style="background:#64748b;margin:3px 6px 3px 0;">
+        {{ it.name }}
+        <a href="{{ url_for('org_delete', oid=it.id) }}" style="color:#fff;text-decoration:none;margin-left:4px;">✕</a>
+      </span>
+    {% else %}
+      <span class="muted">-</span>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

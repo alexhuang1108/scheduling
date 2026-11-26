@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1><span class="ico">🗓️</span>{{ T('schedule') }}</h1></div>
+
+<div class="card">
+  <form method="get" class="form-row">
+    <label>{{ T('date') }}</label>
+    <input type="date" name="date" value="{{ date }}" style="flex:0 1 200px;">
+    <button class="btn btn-blue" type="submit">🔍 {{ T('view') }}</button>
+  </form>
+</div>
+
+{% if is_admin %}
+<div class="card">
+  <h2>{{ T('add_schedule') }}（{{ date }}）</h2>
+  <form method="post" action="{{ url_for('schedule_add') }}" class="form-row">
+    <select name="user_id" required>
+      {% for s in staff %}<option value="{{ s.id }}">{{ s.full_name }}（{{ s.employee_no }}）</option>{% endfor %}
+    </select>
+    <input type="hidden" name="date" value="{{ date }}">
+    <select name="shift_id" required>
+      {% for sh in shifts %}<option value="{{ sh.id }}">{{ sh.name }} {{ sh.start_time }}-{{ sh.end_time }}</option>{% endfor %}
+    </select>
+    <input name="flight_id" placeholder="{{ T('flight_id') }}" size="8">
+    <button class="btn btn-green" type="submit">＋ {{ T('assign') }}</button>
+  </form>
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>{{ date }}</h2>
+  <div class="table-wrap">
+  <table>
+    <thead>
+    <tr>
+      <th>{{ T('employee') }}</th>
+      {% for sh in shifts %}
+      <th class="grid-shift"><span class="badge" style="background:{{ sh.color }}">{{ sh.name }}</span><br>
+        <span class="muted" style="font-weight:400;">{{ sh.start_time }}-{{ sh.end_time }}</span></th>
+      {% endfor %}
+    </tr>
+    </thead>
+    <tbody>
+    {% for s in staff %}
+    <tr>
+      <td>{{ s.full_name }}<br><span class="muted">{{ s.employee_no }} · {{ s.department }}</span></td>
+      {% for sh in shifts %}
+        {% set cell = grid.get(s.id, {}).get(sh.id) %}
+        <td class="grid-shift">
+          {% if cell %}
+            <span class="badge" style="background:{{ sh.color }}">{{ sh.name }}</span>
+            {% if cell.flight_no %}<div class="muted">{{ cell.flight_no }}</div>{% endif %}
+            {% if is_admin %}
+            <div style="margin-top:4px;"><a href="{{ url_for('schedule_delete', sid=cell['id']) }}" class="btn btn-red btn-sm">🗑 {{ T('delete') }}</a></div>
+            {% endif %}
+          {% else %}
+            <span class="muted">—</span>
+          {% endif %}
+        </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1><span class="ico">💬</span>{{ T('messages') }}</h1></div>
+
+{% if can_send %}
+<div class="card">
+  <h2>{{ T('msg_send') }}</h2>
+  <form method="post" action="{{ url_for('messages_send') }}">
+    <div class="form-row" style="margin-bottom:10px;">
+      <label>{{ T('msg_type') }}</label>
+      <select name="kind" id="kind" onchange="toggleKind()">
+        <option value="personal">{{ T('msg_personal') }}</option>
+        <option value="announcement">{{ T('msg_announcement') }}</option>
+      </select>
+      <label id="lblTo">{{ T('msg_to') }}</label>
+      <select name="recipient_id" id="recipient_id">
+        {% for s in staffs %}
+        <option value="{{ s.id }}">{{ s.full_name }}（{{ s.username }}）</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-row" style="margin-bottom:10px;">
+      <label>{{ T('msg_title') }}</label>
+      <input name="title" maxlength="120" required style="flex:1;min-width:200px;">
+    </div>
+    <div class="form-row" style="margin-bottom:10px;">
+      <label>{{ T('msg_body') }}</label>
+      <textarea name="body" rows="3" style="flex:1;min-width:260px;padding:9px 11px;border:1px solid #cbd5e1;border-radius:8px;font-size:15px;font-family:inherit;"></textarea>
+    </div>
+    <button class="btn btn-blue" type="submit">📨 {{ T('msg_send') }}</button>
+  </form>
+</div>
+<script>
+function toggleKind(){
+  var k = document.getElementById('kind').value;
+  var sel = document.getElementById('recipient_id');
+  var lbl = document.getElementById('lblTo');
+  if (k === 'announcement') {
+    sel.style.display = 'none';
+    lbl.style.display = 'none';
+    sel.required = false;
+  } else {
+    sel.style.display = '';
+    lbl.style.display = '';
+    sel.required = true;
+  }
+}
+</script>
+{% endif %}
+
+<div class="card">
+  <h2>{{ T('msg_inbox') }}{% if unread %} <span class="badge" style="background:#dc2626">{{ unread }}</span>{% endif %}</h2>
+  <div class="table-wrap">
+  <table>
+    <thead><tr>
+      <th>{{ T('msg_type') }}</th><th>{{ T('msg_title') }}</th><th>{{ T('msg_from') }}</th>
+      <th>{{ T('msg_to') }}</th><th>{{ T('msg_time') }}</th><th>{{ T('status') }}</th><th></th>
+    </tr></thead>
+    <tbody>
+    {% for m in msgs %}
+    <tr style="{{ 'font-weight:700;background:#eff6ff;' if not m.mine_read }}">
+      <td>
+        {% if m.kind=='announcement' %}<span class="badge" style="background:#7c3aed">📢 {{ T('msg_announcement') }}</span>
+        {% else %}<span class="badge" style="background:#2563eb">{{ T('msg_personal') }}</span>{% endif %}
+      </td>
+      <td>{{ m.title }}{% if m.body %}<div style="font-weight:400;color:#475569;font-size:13px;white-space:pre-wrap;margin-top:4px;">{{ m.body }}</div>{% endif %}</td>
+      <td>{{ m.sender_name }}</td>
+      <td>{{ m.recipient_name if m.recipient_name else T('msg_all') }}</td>
+      <td style="white-space:nowrap;">{{ m.created_at }}</td>
+      <td>
+        {% if m.mine_read %}<span class="badge" style="background:#94a3b8">{{ T('msg_read') }}</span>
+        {% else %}<span class="badge" style="background:#dc2626">{{ T('msg_unread') }}</span>{% endif %}
+      </td>
+      <td style="white-space:nowrap;">
+        {% if not m.mine_read %}
+        <a class="btn btn-sm btn-gray" href="{{ url_for('messages_read', mid=m.id) }}">{{ T('msg_mark_read') }}</a>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" style="text-align:center;color:#94a3b8;">{{ T('msg_empty') }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+{% if can_send and sent %}
+<div class="card">
+  <h2>{{ T('msg_sent_box') }}</h2>
+  <div class="table-wrap">
+  <table>
+    <thead><tr>
+      <th>{{ T('msg_type') }}</th><th>{{ T('msg_title') }}</th><th>{{ T('msg_to') }}</th><th>{{ T('msg_time') }}</th>
+    </tr></thead>
+    <tbody>
+    {% for m in sent %}
+    <tr>
+      <td>
+        {% if m.kind=='announcement' %}<span class="badge" style="background:#7c3aed">📢 {{ T('msg_announcement') }}</span>
+        {% else %}<span class="badge" style="background:#2563eb">{{ T('msg_personal') }}</span>{% endif %}
+      </td>
+      <td>{{ m.title }}</td>
+      <td>{{ m.recipient_name if m.recipient_name else T('msg_all') }}</td>
+      <td style="white-space:nowrap;">{{ m.created_at }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

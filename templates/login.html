@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="{{ session.get('lang','zh') }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>地勤排班系統</title>
+  <style>
+    * { box-sizing:border-box; }
+    body { font-family:"Noto Sans CJK TC","Noto Sans JP","Microsoft JhengHei",sans-serif;
+           background:linear-gradient(135deg,#16314f 0%,#1e3a5f 45%,#2d5a8f 100%);
+           display:flex; align-items:center; justify-content:center;
+           min-height:100vh; margin:0; padding:16px; }
+    body::before { content:"✈"; position:fixed; font-size:340px; opacity:.05;
+                   color:#fff; right:-40px; bottom:-60px; transform:rotate(-12deg);
+                   pointer-events:none; }
+    .box { background:#fff; padding:34px 30px; border-radius:18px; width:100%;
+           max-width:390px; box-shadow:0 20px 60px rgba(0,0,0,.35);
+           position:relative; z-index:1; }
+    .logo { width:60px; height:60px; margin:0 auto 12px; border-radius:16px;
+            background:linear-gradient(135deg,#1e3a5f,#2563eb); color:#fff;
+            display:flex; align-items:center; justify-content:center; font-size:30px;
+            box-shadow:0 6px 18px rgba(37,99,235,.35); }
+    h1 { text-align:center; margin:0 0 4px; font-size:22px; color:#1e3a5f; font-weight:800; }
+    .sub { text-align:center; color:#6b7280; font-size:13px; margin-bottom:20px; }
+    .langbar { display:flex; gap:6px; justify-content:center; margin-bottom:20px; }
+    .langbar a { font-size:13px; padding:7px 14px; border:1px solid #d1d5db;
+                 border-radius:999px; text-decoration:none; color:#374151;
+                 transition:all .15s; }
+    .langbar a:hover { border-color:#2563eb; color:#2563eb; }
+    .langbar a.on { background:#2563eb; color:#fff; border-color:#2563eb; font-weight:bold; }
+    label { display:block; margin:14px 0 5px; font-size:14px; font-weight:500; color:#374151; }
+    input[type=text],input[type=password] { width:100%; padding:11px 12px;
+                 border:1px solid #cbd5e1; border-radius:10px; font-size:16px;
+                 transition:border-color .15s, box-shadow .15s; }
+    input:focus { outline:none; border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.15); }
+    button { width:100%; margin-top:18px; padding:12px; background:linear-gradient(135deg,#2563eb,#1d4ed8);
+             color:#fff; border:none; border-radius:10px; font-size:16px; font-weight:600;
+             cursor:pointer; transition:filter .15s, transform .1s;
+             box-shadow:0 4px 14px rgba(37,99,235,.3); }
+    button:hover { filter:brightness(1.07); }
+    button:active { transform:translateY(1px); }
+    .quick { margin-top:12px; padding:12px; background:linear-gradient(135deg,#16a34a,#15803d);
+             color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:600;
+             cursor:pointer; width:100%; box-shadow:0 4px 14px rgba(22,163,74,.3);
+             transition:filter .15s, transform .1s; }
+    .quick:hover { filter:brightness(1.07); }
+    .quick:active { transform:translateY(1px); }
+    .divider { text-align:center; color:#9ca3af; font-size:12px; margin:14px 0 2px; }
+    .err { background:#fef2f2; color:#991b1b; padding:10px; border-radius:8px;
+           font-size:13px; margin-top:14px; text-align:center; border:1px solid #fecaca; }
+    .hint { margin-top:18px; font-size:12px; color:#6b7280; text-align:center; line-height:1.6; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="logo">✈</div>
+    <h1>地勤排班系統</h1>
+    <div class="sub">航空地勤人員排班管理</div>
+
+    <div class="langbar">
+      <a href="/lang/zh" class="{{ 'on' if session.get('lang','zh')=='zh' else '' }}">繁體中文</a>
+      <a href="/lang/en" class="{{ 'on' if session.get('lang')=='en' else '' }}">English</a>
+      <a href="/lang/ja" class="{{ 'on' if session.get('lang')=='ja' else '' }}">日本語</a>
+    </div>
+
+    <form method="post">
+      <label>{{ '帳號' if session.get('lang','zh')=='zh' else ('Username' if session.get('lang')=='en' else 'アカウント') }}</label>
+      <input type="text" name="username" value="{{ remembered or '' }}" autofocus required>
+      <label>{{ '密碼' if session.get('lang','zh')=='zh' else ('Password' if session.get('lang')=='en' else 'パスワード') }}</label>
+      <input type="password" name="password" required>
+      <button type="submit">{{ '登入' if session.get('lang','zh')=='zh' else ('Sign in' if session.get('lang')=='en' else 'ログイン') }}</button>
+    </form>
+
+    {% if quick %}
+    <div class="divider">—</div>
+    <form method="post" action="/quick-login" id="quickform">
+      <input type="hidden" name="username" value="{{ remembered or '' }}">
+      <button class="quick" type="submit" id="quickbtn" data-method="{{ quick_method }}">
+        {% if quick_method=='fingerprint' %}👆
+        {% elif quick_method=='faceid' %}😀
+        {% else %}🔒{% endif %}
+        {{ '快速登入（免密碼）' if session.get('lang','zh')=='zh' else ('Quick login (no password)' if session.get('lang')=='en' else 'クイックログイン（パスワード不要）') }}
+      </button>
+    </form>
+    <div id="bio-msg" style="text-align:center; font-size:12px; margin-top:6px; color:#6b7280;"></div>
+    <script>
+    (function(){
+      var btn = document.getElementById('quickbtn');
+      var msg = document.getElementById('bio-msg');
+      var method = btn.getAttribute('data-method');
+      var form = document.getElementById('quickform');
+      function isSecure(){ return location.protocol==='https:' || ['localhost','127.0.0.1'].indexOf(location.hostname)>=0; }
+      function submit(){ form.submit(); }
+      btn.addEventListener('click', function(e){
+        if (method === 'screen') return;  // 螢幕鎖：直接送出（靠裝置螢幕鎖把關）
+        // 指紋 / Face ID：呼叫 WebAuthn
+        if (!window.PublicKeyCredential || !isSecure()) {
+          msg.textContent = '此瀏覽器/環境不支援生物辨識，改用免密直接登入。';
+          setTimeout(submit, 800);
+          e.preventDefault();
+          return;
+        }
+        e.preventDefault();
+        msg.textContent = '請驗證身分…';
+        var challenge = new Uint8Array(32);
+        crypto.getRandomValues(challenge);
+        navigator.credentials.get({
+          publicKey: {
+            challenge: challenge,
+            timeout: 60000,
+            userVerification: 'required',
+            rpId: location.hostname,
+            allowCredentials: []
+          }
+        }).then(function(cred){
+          if (cred) { msg.textContent = '✅ 驗證成功'; submit(); }
+          else { msg.textContent = '未驗證，改用免密登入'; submit(); }
+        }).catch(function(err){
+          msg.textContent = '生物辨識不可用（' + (err && err.name ? err.name : err) + '），改用免密登入';
+          submit();
+        });
+      });
+    })();
+    </script>
+    {% endif %}
+
+    {% if error %}<div class="err">{{ error }}</div>{% endif %}
+    <div class="hint">{{ '帳號由管理層建立，初始密碼由系統產生；登入後可自行修改密碼。' if session.get('lang','zh')=='zh' else ('Accounts are created by admins with a system-generated password; you can change it after signing in.' if session.get('lang')=='en' else 'アカウントは管理者が作成し、初期パスワードはシステム生成です。ログイン後に変更できます。') }}</div>
+    <div class="hint">{{ '測試帳號：test / admin / staff1（密碼 test）' if session.get('lang','zh')=='zh' else ('Test accounts: test / admin / staff1 (password test)' if session.get('lang')=='en' else 'テストアカウント：test / admin / staff1（パスワード test）') }}</div>
+  </div>
+</body>
+</html>

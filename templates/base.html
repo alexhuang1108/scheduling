@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ T('app_name') }}{% endblock %}</title>
+  <style>
+    :root {
+      --primary:#1e3a5f; --primary-2:#2d4a73; --accent:#2563eb; --accent-2:#1d4ed8;
+      --bg:#eef2f7; --surface:#ffffff; --text:#1f2937; --muted:#6b7280;
+      --border:#e5e7eb; --radius:14px; --radius-sm:9px;
+      --shadow:0 1px 2px rgba(16,24,40,.06), 0 4px 16px rgba(16,24,40,.06);
+      --shadow-hover:0 4px 8px rgba(16,24,40,.08), 0 12px 28px rgba(16,24,40,.10);
+      --green:#16a34a; --red:#dc2626; --amber:#f59e0b; --gray:#6b7280;
+    }
+    * { box-sizing:border-box; }
+    html { -webkit-text-size-adjust:100%; }
+    body { font-family:"Noto Sans CJK TC","Noto Sans JP","PingFang TC","Hiragino Sans",
+           "Microsoft JhengHei",sans-serif;
+           margin:0; background:var(--bg); color:var(--text); font-size:15px;
+           line-height:1.55; -webkit-font-smoothing:antialiased; }
+    a { color:var(--accent); }
+
+    /* ===== 導覽列 ===== */
+    nav { background:linear-gradient(135deg,#16314f 0%,#1e3a5f 55%,#274b78 100%);
+          color:#fff; padding:0 18px; display:flex; align-items:center; gap:4px;
+          flex-wrap:wrap; min-height:58px; position:sticky; top:0; z-index:50;
+          box-shadow:0 2px 12px rgba(16,24,40,.18); }
+    nav .brand { font-size:18px; font-weight:800; letter-spacing:.3px;
+                 display:flex; align-items:center; gap:8px; margin-right:10px;
+                 white-space:nowrap; }
+    nav .brand .logo { display:inline-flex; align-items:center; justify-content:center;
+                       width:30px; height:30px; border-radius:8px;
+                       background:rgba(255,255,255,.14); font-size:16px; }
+    nav a.navlink { color:#cfe0f5; text-decoration:none; padding:8px 12px;
+                    border-radius:8px; font-size:14px; font-weight:500;
+                    transition:background .15s, color .15s; white-space:nowrap; }
+    nav a.navlink:hover { background:rgba(255,255,255,.12); color:#fff; }
+    nav a.navlink.active { background:var(--accent); color:#fff; }
+    nav .spacer { flex:1; }
+    nav .who { font-size:13px; color:#cfe0f5; display:flex; align-items:center;
+               gap:8px; padding:6px 10px; border-radius:999px; text-decoration:none;
+               background:rgba(255,255,255,.08); }
+    nav .who:hover { background:rgba(255,255,255,.16); }
+    nav .who .avatar { width:26px; height:26px; border-radius:50%; object-fit:cover;
+                       background:var(--accent); color:#fff; display:inline-flex;
+                       align-items:center; justify-content:center; font-size:12px; font-weight:700; }
+    nav a.logout { color:#cfe0f5; text-decoration:none; padding:8px 12px; border-radius:8px;
+                   font-size:14px; transition:background .15s; }
+    nav a.logout:hover { background:rgba(255,255,255,.12); color:#fff; }
+
+    /* ===== 版面 ===== */
+    .container { max-width:1120px; margin:24px auto; padding:0 16px; }
+    .page-head { display:flex; align-items:center; justify-content:space-between;
+                 gap:12px; flex-wrap:wrap; margin-bottom:18px; }
+    h1 { font-size:24px; font-weight:800; margin:0; letter-spacing:.2px;
+         display:flex; align-items:center; gap:10px; }
+    h1 .ico { font-size:22px; }
+    h2 { font-size:16px; font-weight:700; margin:0 0 12px; color:#111827;
+         display:flex; align-items:center; gap:8px; }
+    h2::before { content:""; width:4px; height:16px; border-radius:2px;
+                 background:var(--accent); display:inline-block; }
+
+    .card { background:var(--surface); border:1px solid var(--border);
+            border-radius:var(--radius); padding:20px; margin-bottom:18px;
+            box-shadow:var(--shadow); transition:box-shadow .2s; }
+    .card:hover { box-shadow:var(--shadow-hover); }
+
+    /* ===== 表格 ===== */
+    .table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:10px; }
+    table { width:100%; border-collapse:collapse; min-width:520px; font-size:14px; }
+    th,td { padding:11px 12px; border-bottom:1px solid var(--border); text-align:left; }
+    th { background:#f8fafc; font-weight:700; color:#334155; white-space:nowrap;
+         font-size:13px; text-transform:none; letter-spacing:.2px; }
+    tbody tr { transition:background .12s; }
+    tbody tr:hover { background:#f8fafc; }
+    tbody tr:last-child td { border-bottom:none; }
+
+    /* ===== 徽章 ===== */
+    .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 11px;
+             border-radius:999px; color:#fff; font-size:12px; font-weight:600;
+             white-space:nowrap; }
+
+    /* ===== 按鈕 ===== */
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px;
+           padding:9px 16px; border:none; border-radius:var(--radius-sm);
+           cursor:pointer; text-decoration:none; font-size:14px; font-weight:600;
+           color:#fff; transition:transform .12s, box-shadow .15s, filter .15s;
+           box-shadow:0 1px 2px rgba(16,24,40,.12); }
+    .btn:hover { filter:brightness(1.06); box-shadow:0 4px 12px rgba(16,24,40,.18); }
+    .btn:active { transform:translateY(1px); }
+    .btn-green{background:var(--green);} .btn-red{background:var(--red);}
+    .btn-blue{background:var(--accent);} .btn-gray{background:var(--gray);}
+    .btn-sm { padding:4px 10px; font-size:12px; border-radius:7px; }
+
+    /* ===== 表單 ===== */
+    input,select { padding:9px 11px; border:1px solid #cbd5e1; border-radius:var(--radius-sm);
+                   font-size:15px; max-width:100%; background:#fff; color:var(--text);
+                   transition:border-color .15s, box-shadow .15s; }
+    input:focus,select:focus { outline:none; border-color:var(--accent);
+                               box-shadow:0 0 0 3px rgba(37,99,235,.15); }
+    .form-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .form-row input, .form-row select { flex:1 1 150px; min-width:130px; }
+    label { font-size:14px; font-weight:500; color:#374151; }
+
+    /* ===== 提示 ===== */
+    .flash { padding:12px 16px; border-radius:10px; margin-bottom:16px; font-size:14px;
+             display:flex; align-items:center; gap:10px; border:1px solid transparent; }
+    .flash::before { font-size:16px; }
+    .flash.success{background:#ecfdf5;color:#065f46;border-color:#a7f3d0;}
+    .flash.success::before{content:"✅";}
+    .flash.warning{background:#fffbeb;color:#92400e;border-color:#fde68a;}
+    .flash.warning::before{content:"⚠️";}
+    .flash.error{background:#fef2f2;color:#991b1b;border-color:#fecaca;}
+    .flash.error::before{content:"⛔";}
+
+    .grid-shift { text-align:center; }
+    .stat { font-size:30px; font-weight:800; color:var(--primary); line-height:1.1; }
+    .muted { color:var(--muted); font-size:13px; }
+    .stats { display:flex; gap:16px; flex-wrap:wrap; }
+    .stat-card { flex:1 1 160px; background:linear-gradient(135deg,#f8fafc,#eef2f7);
+                 border:1px solid var(--border); border-radius:12px; padding:16px 18px; }
+    .stat-card .label { color:var(--muted); font-size:13px; margin-top:4px; }
+
+    .empty { text-align:center; color:var(--muted); padding:28px 12px; }
+    .empty .big { font-size:34px; display:block; margin-bottom:8px; opacity:.6; }
+
+    /* ===== 手機 ===== */
+    @media (max-width: 640px) {
+      nav { padding:0 10px; min-height:52px; }
+      nav .brand { font-size:15px; margin-right:4px; }
+      nav a.navlink { padding:8px 8px; font-size:13px; }
+      nav .who { padding:6px; }
+      nav .who .who-name { display:none; }
+      .container { margin:14px auto; padding:0 10px; }
+      h1 { font-size:20px; }
+      .card { padding:14px; border-radius:12px; }
+      input,select,button,.btn { font-size:16px; }
+      .btn { padding:11px 15px; }
+      .stat { font-size:26px; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <span class="brand"><span class="logo">✈</span>{{ T('app_name') }}</span>
+    {% set ep = request.endpoint or '' %}
+    <a class="navlink {{ 'active' if ep=='index' }}" href="{{ url_for('index') }}">{{ T('nav_dashboard') }}</a>
+    <a class="navlink {{ 'active' if ep=='schedule' }}" href="{{ url_for('schedule') }}">{{ T('nav_schedule') }}</a>
+    <a class="navlink {{ 'active' if ep=='my_schedule' }}" href="{{ url_for('my_schedule') }}">{{ T('nav_mine') }}</a>
+    <a class="navlink {{ 'active' if ep in ('flights','flights_new','flights_add') }}" href="{{ url_for('flights') }}">{{ T('nav_flights') }}</a>
+    <a class="navlink {{ 'active' if ep=='radar' }}" href="{{ url_for('radar') }}">{{ T('nav_radar') }}</a>
+    <a class="navlink {{ 'active' if ep in ('leave','leave_apply','leave_review') }}" href="{{ url_for('leave') }}">{{ T('nav_leave') }}</a>
+    <a class="navlink {{ 'active' if ep in ('messages','messages_send','messages_read') }}" href="{{ url_for('messages') }}">{{ T('nav_messages') }}{% if unread_count %}<span class="badge">{{ unread_count }}</span>{% endif %}</a>
+    <a class="navlink {{ 'active' if ep in ('profile',) }}" href="{{ url_for('profile') }}">🪪 {{ T('nav_profile') }}</a>
+    <a class="navlink {{ 'active' if ep=='my_settings' }}" href="{{ url_for('my_settings') }}">{{ T('nav_my_settings') }}</a>
+    {% if is_admin %}
+      <a class="navlink {{ 'active' if ep in ('users','users_add','users_toggle','users_reset_pw','users_set_role') }}" href="{{ url_for('users') }}">{{ T('nav_users') }}</a>
+      <a class="navlink {{ 'active' if ep=='settings' }}" href="{{ url_for('settings') }}">{{ T('nav_settings') }}</a>
+      <a class="navlink {{ 'active' if ep in ('avatar_requests','avatar_review') }}" href="{{ url_for('avatar_requests') }}">{{ T('avatar_requests') }}</a>
+    {% endif %}
+    {% if is_super %}
+      <a class="navlink {{ 'active' if ep in ('org','org_add','org_delete') }}" href="{{ url_for('org') }}">{{ T('org_data') }}</a>
+      <a class="navlink {{ 'active' if ep=='login_logs' }}" href="{{ url_for('login_logs') }}">{{ T('nav_logs') }}</a>
+    {% endif %}
+    <span class="spacer"></span>
+    <a class="who" href="{{ url_for('profile') }}" title="{{ T('profile') }}">
+      <span class="avatar">{{ (session.get('full_name') or '?')[0] }}</span>
+      <span class="who-name">{{ session.get('full_name') }}（{{ T('role_super') if session.get('role')=='superadmin' else (T('role_admin') if session.get('role')=='admin' else T('role_staff')) }}）</span>
+    </a>
+    <a class="logout" href="{{ url_for('logout') }}">⎋ {{ T('nav_logout') }}</a>
+  </nav>
+  <div class="container">
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+      {% for cat, m in msgs %}<div class="flash {{cat}}">{{ m }}</div>{% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

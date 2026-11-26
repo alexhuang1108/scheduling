@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1><span class="ico">🔧</span>{{ T('settings') }}</h1></div>
+
+<div class="card">
+  <h2>{{ T('quick_login') }}</h2>
+  <p class="muted">{{ T('quick_login_desc') }}</p>
+  <form method="post">
+    <label style="display:flex; align-items:center; gap:12px; font-size:16px; cursor:pointer;">
+      <input type="checkbox" name="quick_login" value="on" {{ 'checked' if quick else '' }}
+             style="width:22px; height:22px; accent-color:#2563eb;">
+      <span>{{ T('quick_login') }}：
+        <span class="badge" style="background:{{ '#16a34a' if quick else '#9ca3af' }}">{{ T('enabled') if quick else T('disabled') }}</span>
+      </span>
+    </label>
+
+    <div style="margin-top:18px;">
+      <div style="font-weight:600; margin-bottom:8px;">{{ T('quick_method_label') }}</div>
+      <div class="muted" style="margin-bottom:10px;">{{ T('quick_method_desc') }}</div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:10px 12px; border:1px solid var(--border); border-radius:10px;">
+          <input type="radio" name="quick_method" value="fingerprint" {{ 'checked' if method=='fingerprint' else '' }} style="width:18px;height:18px;accent-color:#2563eb;">
+          <span>👆 {{ T('qm_fingerprint') }} <span class="muted">— {{ T('qm_fingerprint_note') }}</span></span>
+        </label>
+        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:10px 12px; border:1px solid var(--border); border-radius:10px;">
+          <input type="radio" name="quick_method" value="faceid" {{ 'checked' if method=='faceid' else '' }} style="width:18px;height:18px;accent-color:#2563eb;">
+          <span>😀 {{ T('qm_faceid') }} <span class="muted">— {{ T('qm_faceid_note') }}</span></span>
+        </label>
+        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:10px 12px; border:1px solid var(--border); border-radius:10px;">
+          <input type="radio" name="quick_method" value="screen" {{ 'checked' if method=='screen' else '' }} style="width:18px;height:18px;accent-color:#2563eb;">
+          <span>🔓 {{ T('qm_screen') }} <span class="muted">— {{ T('qm_screen_note') }}</span></span>
+        </label>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;">
+      <button class="btn btn-green" type="submit">💾 {{ T('save') }}</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>{{ T('nav_logs') }}</h2>
+  <p class="muted">{{ T('super_only') }}</p>
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1><span class="ico">🖼</span>{{ T('avatar_requests') }}</h1></div>
+
+<div class="card">
+  <div class="table-wrap">
+  <table>
+    <thead><tr>
+      <th>{{ T('avatar_req_from') }}</th><th>{{ T('username') }}</th>
+      <th>{{ T('msg_time') }}</th><th>{{ T('status') }}</th><th></th>
+    </tr></thead>
+    <tbody>
+    {% for r in reqs %}
+    <tr>
+      <td><a href="{{ url_for('profile', uid=r.user_id) }}">{{ r.full_name }}</a></td>
+      <td>{{ r.username }}</td>
+      <td style="white-space:nowrap;">{{ r.created_at }}</td>
+      <td><span class="badge" style="background:#f59e0b">{{ T('avatar_pending') }}</span></td>
+      <td style="white-space:nowrap;">
+        <a class="btn btn-sm btn-green" href="{{ url_for('avatar_review', rid=r.id, decision='approve') }}">✔ {{ T('avatar_approve') }}</a>
+        <a class="btn btn-sm btn-red" href="{{ url_for('avatar_review', rid=r.id, decision='reject') }}">✕ {{ T('avatar_reject') }}</a>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" style="text-align:center;color:#94a3b8;">{{ T('avatar_no_requests') }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

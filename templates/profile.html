@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1><span class="ico">🪪</span>{{ T('profile') }}</h1></div>
+
+<div class="card" style="max-width:560px;">
+  <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;">
+    <div style="text-align:center;">
+      {% if user.avatar %}
+      <img src="{{ url_for('avatar_file', fname=user.avatar) }}" alt="{{ T('avatar') }}"
+           style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid #e2e8f0;">
+      {% else %}
+      <div style="width:120px;height:120px;border-radius:50%;background:var(--accent);color:#fff;
+                  display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:700;">
+        {{ (user.full_name or '?')[0] }}
+      </div>
+      {% endif %}
+    </div>
+    <div style="flex:1;min-width:220px;">
+      <h2 style="margin-bottom:8px;">{{ user.full_name }}</h2>
+      <table style="min-width:auto;font-size:14px;">
+        <tr><td style="color:#64748b;">{{ T('id_account') }}</td><td><b>{{ user.username }}</b></td></tr>
+        <tr><td style="color:#64748b;">{{ T('department') }}</td><td>{{ user.department or '-' }}</td></tr>
+        <tr><td style="color:#64748b;">{{ T('unit') }}</td><td>{{ user.unit or '-' }}</td></tr>
+        <tr><td style="color:#64748b;">{{ T('duty') }}</td><td>{{ user.duty or '-' }}</td></tr>
+        <tr><td style="color:#64748b;">{{ T('job_title') }}</td><td>{{ user.job_title or '-' }}</td></tr>
+        <tr><td style="color:#64748b;">{{ T('member_since') }}</td><td>{{ user.hire_date or '-' }}</td></tr>
+        <tr><td style="color:#64748b;">{{ T('seniority') }}</td><td>{{ seniority }}</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% if is_self %}
+<div class="card" style="max-width:560px;">
+  <h2>{{ T('avatar') }}</h2>
+
+  {% if not user.avatar %}
+    <p class="muted">{{ T('avatar_upload') }}</p>
+    <form method="post" action="{{ url_for('avatar_upload') }}" enctype="multipart/form-data" class="form-row">
+      <input type="file" name="avatar" accept="image/png,image/jpeg,image/gif,image/webp" required>
+      <button class="btn btn-blue" type="submit">📷 {{ T('avatar_upload') }}</button>
+    </form>
+
+  {% elif user.avatar_unlocked %}
+    <p style="color:#16a34a;font-weight:600;">{{ T('avatar_unlocked') }}</p>
+    <form method="post" action="{{ url_for('avatar_upload') }}" enctype="multipart/form-data" class="form-row">
+      <input type="file" name="avatar" accept="image/png,image/jpeg,image/gif,image/webp" required>
+      <button class="btn btn-blue" type="submit">🖼 {{ T('avatar_change') }}</button>
+    </form>
+
+  {% elif pending %}
+    <p style="color:#f59e0b;font-weight:600;">⏳ {{ T('avatar_pending') }}</p>
+
+  {% else %}
+    <p class="muted">{{ T('avatar_locked') }}</p>
+    <form method="post" action="{{ url_for('avatar_request') }}">
+      <button class="btn btn-blue" type="submit">📨 {{ T('avatar_request') }}</button>
+    </form>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if can_review %}
+<div class="card" style="max-width:560px;">
+  <a class="btn btn-gray" href="{{ url_for('avatar_requests') }}">{{ T('avatar_requests') }}</a>
+</div>
+{% endif %}
+{% endblock %}

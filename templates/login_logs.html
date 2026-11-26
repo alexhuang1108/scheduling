@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1><span class="ico">📋</span>{{ T('login_logs') }}</h1></div>
+<p class="muted">{{ T('super_only') }}</p>
+
+<div class="card">
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>{{ T('log_time') }}</th><th>{{ T('full_name') }}</th><th>{{ T('role') }}</th><th>{{ T('log_action') }}</th><th>{{ T('log_method') }}</th><th>{{ T('log_ip') }}</th><th>{{ T('log_device') }}</th><th>{{ T('log_lang') }}</th></tr></thead>
+    <tbody>
+    {% for l in logs %}
+    <tr>
+      <td class="muted">{{ l.created_at }}</td>
+      <td>{{ l.full_name or l.username or '-' }}</td>
+      <td>
+        {% if l.role=='superadmin' %}<span class="badge" style="background:#7c3aed">{{ T('role_super') }}</span>
+        {% elif l.role=='admin' %}<span class="badge" style="background:#2563eb">{{ T('role_admin') }}</span>
+        {% elif l.role=='staff' %}<span class="badge" style="background:#64748b">{{ T('role_staff') }}</span>
+        {% else %}-{% endif %}
+      </td>
+      <td>
+        {% if l.action=='login' %}<span class="badge" style="background:#16a34a">{{ T('act_login') }}</span>
+        {% elif l.action=='logout' %}<span class="badge" style="background:#64748b">{{ T('act_logout') }}</span>
+        {% elif l.action=='login_failed' %}<span class="badge" style="background:#dc2626">{{ T('act_login_failed') }}</span>
+        {% else %}{{ l.action }}{% endif %}
+      </td>
+      <td>
+        {% if l.method=='quick' %}<span class="badge" style="background:#0891b2">{{ T('m_quick') }}</span>
+        {% else %}<span class="badge" style="background:#94a3b8">{{ T('m_password') }}</span>{% endif %}
+      </td>
+      <td class="muted">{{ l.ip or '-' }}</td>
+      <td class="muted">{{ (l.user_agent or '-')[:60] }}</td>
+      <td class="muted">{{ l.lang or '-' }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% if not logs %}<div class="empty"><span class="big">📋</span>{{ T('no_logs') }}</div>{% endif %}
+</div>
+{% endblock %}

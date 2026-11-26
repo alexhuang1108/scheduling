@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1><span class="ico">👥</span>{{ T('users') }}</h1></div>
+
+<div class="card">
+  <h2>{{ T('add_user') }}</h2>
+  <p class="muted">{{ T('no_self_signup') }} · {{ T('pw_hint') }}</p>
+  <form method="post" action="{{ url_for('users_add') }}">
+    <div class="form-row" style="margin-bottom:10px;">
+      <input name="username" placeholder="{{ T('username') }}" required>
+      <input name="full_name" placeholder="{{ T('full_name') }}" required>
+      <input name="employee_no" placeholder="{{ T('employee_no') }}" size="8">
+      <label>{{ T('hire_date') }}</label>
+      <input type="date" name="hire_date">
+    </div>
+    <div class="form-row" style="margin-bottom:10px;">
+      <label>{{ T('department') }}</label>
+      <select name="department"><option value="">-</option>
+        {% for n in org.department %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+      </select>
+      <label>{{ T('unit') }}</label>
+      <select name="unit"><option value="">-</option>
+        {% for n in org.unit %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="form-row" style="margin-bottom:10px;">
+      <label>{{ T('duty') }}</label>
+      <select name="duty"><option value="">-</option>
+        {% for n in org.duty %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+      </select>
+      <label>{{ T('job_title') }}</label>
+      <select name="job_title"><option value="">-</option>
+        {% for n in org.job_title %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+      </select>
+    </div>
+    <button class="btn btn-green" type="submit">＋ {{ T('add') }}</button>
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+  <table>
+    <thead><tr>
+      <th>{{ T('avatar') }}</th>
+      <th>{{ T('full_name') }}</th><th>{{ T('username') }}</th>
+      <th>{{ T('department') }}</th><th>{{ T('unit') }}</th>
+      <th>{{ T('duty') }}</th><th>{{ T('job_title') }}</th>
+      <th>{{ T('hire_date') }}</th><th>{{ T('seniority') }}</th>
+      <th>{{ T('status') }}</th><th></th>
+    </tr></thead>
+    <tbody>
+    {% for u in users %}
+    <tr>
+      <td>
+        {% if u.avatar %}
+        <img src="{{ url_for('avatar_file', fname=u.avatar) }}" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
+        {% else %}
+        <span style="width:40px;height:40px;border-radius:50%;background:#e2e8f0;color:#475569;display:inline-flex;align-items:center;justify-content:center;font-weight:700;">{{ (u.full_name or '?')[0] }}</span>
+        {% endif %}
+      </td>
+      <td><a href="{{ url_for('profile', uid=u.id) }}">{{ u.full_name }}</a></td>
+      <td>{{ u.username }}</td>
+      <td>{{ u.department or '-' }}</td>
+      <td>{{ u.unit or '-' }}</td>
+      <td>{{ u.duty or '-' }}</td>
+      <td>{{ u.job_title or '-' }}</td>
+      <td style="white-space:nowrap;">{{ u.hire_date or '-' }}</td>
+      <td style="white-space:nowrap;">{{ seniority.get(u.id, '-') }}</td>
+      <td>
+        {% if u.active %}<span class="badge" style="background:#16a34a">{{ T('active') }}</span>
+        {% else %}<span class="badge" style="background:#9ca3af">{{ T('inactive') }}</span>{% endif %}
+      </td>
+      <td style="white-space:nowrap;">
+        {% if is_super and u.role != 'superadmin' %}
+          {% if u.role == 'admin' %}
+          <a href="{{ url_for('users_set_role', uid=u.id, newrole='staff') }}" class="btn btn-gray btn-sm">{{ T('unset_admin') }}</a>
+          {% else %}
+          <a href="{{ url_for('users_set_role', uid=u.id, newrole='admin') }}" class="btn btn-blue btn-sm">{{ T('set_admin') }}</a>
+          {% endif %}
+        {% endif %}
+        <a href="{{ url_for('users_reset_pw', uid=u.id) }}" class="btn btn-blue btn-sm">🔑 {{ T('reset_pw') }}</a>
+        <a href="{{ url_for('users_toggle', uid=u.id) }}" class="btn btn-gray btn-sm">{{ T('disable') if u.active else T('enable') }}</a>
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

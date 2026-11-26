@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1><span class="ico">📡</span>{{ T('radar') }}</h1></div>
+<p class="muted">{{ T('radar_hint') }}</p>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  #radar-map { height:600px; border-radius:12px; border:1px solid var(--border);
+               box-shadow:var(--shadow); background:#0b1e33; }
+  .plane-icon { filter:drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
+  .plane-label { background:rgba(8,20,35,.85); color:#fff; border:none;
+                 font-weight:700; font-size:11px; padding:1px 6px; border-radius:6px;
+                 white-space:nowrap; }
+  .plane-label::before { display:none; }
+  .flight-pop { min-width:240px; }
+  .flight-pop h3 { margin:0 0 8px; font-size:16px; }
+  .flight-pop table { min-width:auto; font-size:13px; }
+  .flight-pop td { padding:4px 6px; border-bottom:1px solid #eef2f7; }
+  .flight-pop td:first-child { color:#64748b; white-space:nowrap; }
+  .flight-pop .badge { font-size:11px; }
+  .radar-bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+  .radar-bar .badge { background:#0891b2; }
+  .radar-bar .badge.mine { background:#2563eb; }
+  @media (max-width:640px){ #radar-map { height:460px; } }
+</style>
+
+<div class="card">
+  <div class="radar-bar">
+    <span>{{ T('radar_area') }}:</span>
+    {% for k, name in boxes.items() %}
+      <a class="btn btn-sm {{ 'btn-blue' if box==k else 'btn-gray' }}" href="{{ url_for('radar', box=k) }}">{{ name }}</a>
+    {% endfor %}
+    <span class="badge">✈ {{ T('radar_count') }}: {{ count }}</span>
+    <a class="btn btn-sm btn-gray" href="{{ url_for('radar', box=box) }}">🔄 {{ T('radar_refresh') }}</a>
+  </div>
+  <div id="radar-map"></div>
+  {% if not planes %}<div class="empty"><span class="big">📡</span>{{ T('radar_empty') }}</div>{% endif %}
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+var PLANES = {{ planes | tojson }};
+var L10N = {
+  route: "{{ T('route') }}",
+  alt: "{{ T('live_alt') }}",
+  speed: "{{ T('live_speed') }}",
+  dep: "{{ T('dep_time_label') }}",
+  arr: "{{ T('arr_time_label') }}",
+  eta: "{{ T('eta_remaining') }}",
+  date: "{{ T('date') }}",
+  status: "{{ T('status') }}",
+  st_departed: "{{ T('st_departed') }}",
+  st_delayed: "{{ T('st_delayed') }}",
+  none: "{{ T('live_none') }}",
+  callsign: "{{ T('callsign_label') }}",
+  origin: "{{ T('origin_country') }}",
+  heading: "{{ T('heading') }}",
+  vr: "{{ T('vertical_rate') }}"
+};
+
+var map = L.map('radar-map', {zoomControl:true});
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 18,
+  attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+function planeSvg(heading, color) {
+  var h = (heading === null || heading === undefined) ? 0 : heading;
+  return '<svg class="plane-icon" width="26" height="26" viewBox="0 0 24 24" ' +
+         'style="transform:rotate(' + h + 'deg);">' +
+         '<path fill="' + color + '" stroke="#0b3a5e" stroke-width="0.6" ' +
+         'd="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>';
+}
+
+function fmtETA(arrTime, date) {
+  if (!arrTime) return L10N.none;
+  var now = new Date();
+  var target;
+  if (date) {
+    target = new Date(date + 'T' + arrTime + ':00');
+  } else {
+    target = new Date(now.getFullYear(), now.getMonth(), now.getDate(),
+                      parseInt(arrTime.split(':')[0]), parseInt(arrTime.split(':')[1]));
+  }
+  var diff = Math.round((target - now) / 60000);
+  if (isNaN(diff)) return L10N.none;
+  if (diff <= 0) return '0 min';
+  var h = Math.floor(diff / 60), m = diff % 60;
+  return (h > 0 ? h + ' h ' : '') + m + ' min';
+}
+
+function fmtAlt(baro) {
+  if (baro === null || baro === undefined) return '-';
+  return Math.round(baro * 3.28084).toLocaleString() + ' ft';
+}
+function fmtSpd(vel) {
+  if (vel === null || vel === undefined) return '-';
+  return Math.round(vel * 1.94384) + ' kt';
+}
+function fmtVr(ver) {
+  if (ver === null || ver === undefined) return '-';
+  return Math.round(ver * 196.85) + ' ft/min';
+}
+
+function popupHtml(p) {
+  var rows = '';
+  if (p.mine) {
+    var stBadge = p.mine.status === 'delayed'
+      ? '<span class="badge" style="background:#f59e0b">' + L10N.st_delayed + '</span>'
+      : '<span class="badge" style="background:#0891b2">' + L10N.st_departed + '</span>';
+    var route = (p.mine.dep_iata || '?') + ' → ' + (p.mine.arr_iata || '?');
+    if (p.mine.dep_city || p.mine.arr_city)
+      route += '  (' + (p.mine.dep_city || '?') + ' → ' + (p.mine.arr_city || '?') + ')';
+    rows += '<tr><td>' + L10N.route + '</td><td>' + route + '</td></tr>';
+    rows += '<tr><td>' + L10N.dep + '</td><td>' + (p.mine.dep_time || '-') + '</td></tr>';
+    rows += '<tr><td>' + L10N.arr + '</td><td>' + (p.mine.arr_time || '-') + '</td></tr>';
+    rows += '<tr><td>' + L10N.eta + '</td><td><b>' + fmtETA(p.mine.arr_time, p.mine.date) + '</b></td></tr>';
+    rows += '<tr><td>' + L10N.date + '</td><td>' + (p.mine.date || '-') + '</td></tr>';
+    rows += '<tr><td>' + L10N.status + '</td><td>' + stBadge + '</td></tr>';
+  }
+  var title = p.mine ? ('✈ ' + p.mine.flight_no)
+                     : (p.callsign ? '✈ ' + p.callsign : '✈ ' + (p.icao24 || '?'));
+  return '<div class="flight-pop"><h3>' + title + '</h3><table>' +
+    rows +
+    '<tr><td>' + L10N.alt + '</td><td>' + fmtAlt(p.baro) + '</td></tr>' +
+    '<tr><td>' + L10N.speed + '</td><td>' + fmtSpd(p.vel) + '</td></tr>' +
+    '<tr><td>' + L10N.heading + '</td><td>' + (p.true_track != null ? Math.round(p.true_track) + '°' : '-') + '</td></tr>' +
+    '<tr><td>' + L10N.vr + '</td><td>' + fmtVr(p.ver) + '</td></tr>' +
+    (p.callsign ? '<tr><td>' + L10N.callsign + '</td><td>' + p.callsign + '</td></tr>' : '') +
+    (p.origin ? '<tr><td>' + L10N.origin + '</td><td>' + p.origin + '</td></tr>' : '') +
+    '</table></div>';
+}
+
+var bounds = [];
+PLANES.forEach(function(p) {
+  var isMine = !!p.mine;
+  var color = isMine ? '#3b82f6' : '#94a3b8';
+  var label = isMine ? p.mine.flight_no : (p.callsign || p.icao24 || '');
+  var icon = L.divIcon({
+    className: '',
+    html: '<div style="position:relative;text-align:center;">' + planeSvg(p.true_track, color) +
+          (label ? '<div class="plane-label" style="position:absolute;left:50%;top:22px;transform:translateX(-50%);' +
+                   (isMine ? 'background:#2563eb;' : '') + '">' + label + '</div>' : '') +
+          '</div>',
+    iconSize: [26, 26], iconAnchor: [13, 13]
+  });
+  var mk = L.marker([p.lat, p.lon], {icon: icon}).addTo(map);
+  mk.bindPopup(popupHtml(p), {maxWidth: 340});
+  bounds.push([p.lat, p.lon]);
+  if (isMine) mk.openPopup();
+});
+
+if (bounds.length >= 2) {
+  map.fitBounds(bounds, {padding: [50, 50], maxZoom: 8});
+} else if (bounds.length === 1) {
+  map.setView(bounds[0], 7);
+} else {
+  map.setView([24.5, 121.5], 6);
+}
+</script>
+{% endblock %}
