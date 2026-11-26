@@ -10,8 +10,6 @@ I18N = {
     "nav_dashboard": {"zh": "儀表板", "en": "Dashboard", "ja": "ダッシュボード"},
     "nav_schedule": {"zh": "總排班", "en": "Schedule", "ja": "配属表"},
     "nav_mine": {"zh": "我的班表", "en": "My Shifts", "ja": "自分のシフト"},
-    "nav_flights": {"zh": "航班資訊", "en": "Flights", "ja": "便情報"},
-    "nav_radar": {"zh": "航班雷達", "en": "Flight Radar", "ja": "便レーダー"},
     "nav_leave": {"zh": "休假申請", "en": "Leave", "ja": "休暇申請"},
     "nav_messages": {"zh": "訊息", "en": "Messages", "ja": "メッセージ"},
     "nav_users": {"zh": "人員管理", "en": "Staff", "ja": "スタッフ管理"},
