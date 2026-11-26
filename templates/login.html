@@ -126,7 +126,6 @@
 
     {% if error %}<div class="err">{{ error }}</div>{% endif %}
     <div class="hint">{{ '帳號由管理層建立，初始密碼由系統產生；登入後可自行修改密碼。' if session.get('lang','zh')=='zh' else ('Accounts are created by admins with a system-generated password; you can change it after signing in.' if session.get('lang')=='en' else 'アカウントは管理者が作成し、初期パスワードはシステム生成です。ログイン後に変更できます。') }}</div>
-    <div class="hint">{{ '測試帳號：test / admin / staff1（密碼 test）' if session.get('lang','zh')=='zh' else ('Test accounts: test / admin / staff1 (password test)' if session.get('lang')=='en' else 'テストアカウント：test / admin / staff1（パスワード test）') }}</div>
   </div>
 </body>
 </html>
