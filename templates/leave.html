@@ -4,7 +4,7 @@
 
 <div class="card">
   <h2>{{ T('apply_leave') }}</h2>
-  <form method="post" action="{{ url_for('leave_apply') }}" class="form-row">
+  <form method="post" action="{{ url_for('leave_apply') }}" enctype="multipart/form-data" class="form-row">
     <label>{{ T('from') }}</label><input type="date" name="start_date" required>
     <label>{{ T('to') }}</label><input type="date" name="end_date" required>
     <select name="leave_type">
@@ -12,8 +12,14 @@
       <option value="病假">{{ T('lt_sick') }}</option>
       <option value="事假">{{ T('lt_personal') }}</option>
       <option value="公假">{{ T('lt_official') }}</option>
+      <option value="喪假">{{ T('lt_bereavement') }}</option>
+      <option value="婚假">{{ T('lt_marriage') }}</option>
+      <option value="產假">{{ T('lt_maternity') }}</option>
     </select>
     <input name="reason" placeholder="{{ T('reason') }}">
+    <label>{{ T('upload_proof') }}</label>
+    <input type="file" name="attachment" accept=".png,.jpg,.jpeg,.gif,.webp,.pdf">
+    <span class="muted" style="font-size:12px;">{{ T('proof_hint') }}</span>
     <button class="btn btn-green" type="submit">📨 {{ T('submit') }}</button>
   </form>
 </div>
@@ -22,7 +28,7 @@
   <h2>{{ T('records') }}</h2>
   <div class="table-wrap">
   <table>
-    <thead><tr><th>{{ T('applicant') }}</th><th>{{ T('from') }}</th><th>{{ T('to') }}</th><th>{{ T('leave_type') }}</th><th>{{ T('reason') }}</th><th>{{ T('status') }}</th><th></th></tr></thead>
+    <thead><tr><th>{{ T('applicant') }}</th><th>{{ T('from') }}</th><th>{{ T('to') }}</th><th>{{ T('leave_type') }}</th><th>{{ T('reason') }}</th><th>{{ T('proof') }}</th><th>{{ T('status') }}</th><th></th></tr></thead>
     <tbody>
     {% for l in leaves %}
     <tr>
@@ -31,6 +37,11 @@
       <td>{{ l.end_date }}</td>
       <td>{{ l.leave_type }}</td>
       <td>{{ l.reason or '-' }}</td>
+      <td>
+        {% if l.attachment %}
+        <a href="{{ url_for('leave_attachment', fname=l.attachment) }}" target="_blank" class="btn btn-blue btn-sm">📎 {{ T('view_proof') }}</a>
+        {% else %}<span class="muted">-</span>{% endif %}
+      </td>
       <td>
         {% if l.status=='pending' %}<span class="badge" style="background:#f59e0b">{{ T('lv_pending') }}</span>
         {% elif l.status=='approved' %}<span class="badge" style="background:#16a34a">{{ T('lv_approved') }}</span>

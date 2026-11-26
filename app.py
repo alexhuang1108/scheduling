@@ -866,15 +866,34 @@ def leave():
 @app.route("/leave/apply", methods=["POST"])
 @login_required()
 def leave_apply():
+    f = request.files.get("attachment")
+    fname = None
+    if f and f.filename:
+        ext = Path(f.filename).suffix.lower()
+        if ext in ALLOWED_DOC_EXT:
+            f.seek(0, 2)
+            size = f.tell()
+            f.seek(0)
+            if size <= 5 * 1024 * 1024:
+                LEAVE_DOC_DIR.mkdir(parents=True, exist_ok=True)
+                fname = f"leave_{session['user_id']}_{datetime.now().strftime('%Y%m%d%H%M%S')}{ext}"
+                f.save(LEAVE_DOC_DIR / fname)
     db = get_db()
     db.execute(
-        "INSERT INTO leave_requests (user_id,start_date,end_date,leave_type,reason) VALUES (?,?,?,?,?)",
+        "INSERT INTO leave_requests (user_id,start_date,end_date,leave_type,reason,attachment) VALUES (?,?,?,?,?,?)",
         (session["user_id"], request.form["start_date"], request.form["end_date"],
-         request.form["leave_type"], request.form.get("reason")))
+         request.form["leave_type"], request.form.get("reason"), fname))
     db.commit()
     db.close()
     flash(t("leave_submitted", session.get("lang", "zh")), "success")
     return redirect(url_for("leave"))
+
+
+@app.route("/leave/attachment/<fname>")
+@login_required()
+def leave_attachment(fname):
+    from flask import send_from_directory
+    return send_from_directory(LEAVE_DOC_DIR, fname)
 
 
 @app.route("/leave/review/<int:lid>/<action>")
@@ -1002,8 +1021,10 @@ def org_delete(oid):
 # ---------- 個人資訊卡與大頭貼 ----------
 
 AVATAR_DIR = Path(os.environ.get("SCHED_DATA", "/data")) / "avatars"
+LEAVE_DOC_DIR = Path(os.environ.get("SCHED_DATA", "/data")) / "leave_docs"
 ALLOWED_EXT = {".png": "image/png", ".jpg": "image/jpeg",
                ".jpeg": "image/jpeg", ".gif": "image/gif", ".webp": "image/webp"}
+ALLOWED_DOC_EXT = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".pdf"}
 
 
 @app.route("/profile")

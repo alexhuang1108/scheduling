@@ -157,6 +157,7 @@ CREATE TABLE IF NOT EXISTS leave_requests (
     status TEXT DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')),
     reviewed_by INTEGER REFERENCES users(id),
     reviewed_at TEXT,
+    attachment TEXT,
     created_at TEXT DEFAULT (datetime('now'))
 );
 """
@@ -299,6 +300,9 @@ def init_db():
     fcols = {r["name"] for r in conn.execute("PRAGMA table_info(flights)")}
     if "callsign" not in fcols:
         conn.execute("ALTER TABLE flights ADD COLUMN callsign TEXT")
+    lcols = {r["name"] for r in conn.execute("PRAGMA table_info(leave_requests)")}
+    if "attachment" not in lcols:
+        conn.execute("ALTER TABLE leave_requests ADD COLUMN attachment TEXT")
     conn.commit()
     # 預設三班制
     if conn.execute("SELECT COUNT(*) FROM shifts").fetchone()[0] == 0:
