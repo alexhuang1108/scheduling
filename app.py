@@ -7,7 +7,7 @@ from pathlib import Path
 
 from flask import (
     Flask, render_template, request, redirect, url_for,
-    session, flash, jsonify
+    session, flash, jsonify, send_file
 )
 
 from models import get_db, init_db, get_setting, set_setting, log_login
@@ -214,6 +214,83 @@ def schedule():
                            staff=staff, grid=grid)
 
 
+@app.route("/schedule/export")
+@login_required(("admin", "superadmin"))
+def schedule_export():
+    """匯出指定日期總排班表為 Excel。"""
+    from io import BytesIO
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+
+    d = request.args.get("date", date.today().isoformat())
+    db = get_db()
+    shifts = db.execute("SELECT * FROM shifts WHERE active=1 ORDER BY start_time").fetchall()
+    staff = db.execute(
+        "SELECT * FROM users WHERE role='staff' AND active=1 ORDER BY full_name").fetchall()
+    rows = db.execute(
+        """SELECT s.user_id, s.shift_id, sh.name AS shift_name, sh.color, f.flight_no
+           FROM schedules s JOIN shifts sh ON sh.id=s.shift_id
+           LEFT JOIN flights f ON f.id=s.flight_id
+           WHERE s.date=?""", (d,)).fetchall()
+    db.close()
+
+    grid = {}
+    for r in rows:
+        grid.setdefault(r["user_id"], {})[r["shift_id"]] = r
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = d
+
+    thin = Side(style="thin", color="CBD5E1")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    head_fill = PatternFill("solid", fgColor="1E3A8A")
+    head_font = Font(bold=True, color="FFFFFF")
+    center = Alignment(horizontal="center", vertical="center")
+
+    headers = ["員工", "員工編號", "部門", "單位", "職務", "職稱"] + \
+              [f"{sh['name']} {sh['start_time']}-{sh['end_time']}" for sh in shifts]
+    ws.append(headers)
+    for c in ws[1]:
+        c.fill = head_fill
+        c.font = head_font
+        c.alignment = center
+        c.border = border
+
+    for s in staff:
+        row = [s["full_name"], s["employee_no"] or "", s["department"] or "",
+               s["unit"] or "", s["duty"] or "", s["job_title"] or ""]
+        for sh in shifts:
+            cell = grid.get(s["id"], {}).get(sh["id"])
+            if cell:
+                txt = sh["name"]
+                if cell["flight_no"]:
+                    txt += f"（{cell['flight_no']}）"
+                row.append(txt)
+            else:
+                row.append("")
+        ws.append(row)
+
+    for r in range(2, ws.max_row + 1):
+        for c in range(1, ws.max_column + 1):
+            cell = ws.cell(row=r, column=c)
+            cell.border = border
+            if c >= 7:
+                cell.alignment = center
+
+    from openpyxl.utils import get_column_letter
+    widths = [12, 10, 12, 12, 12, 12] + [16] * len(shifts)
+    for i, w in enumerate(widths, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+
+    bio = BytesIO()
+    wb.save(bio)
+    bio.seek(0)
+    return send_file(
+        bio, as_attachment=True, download_name=f"schedule_{d}.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+
 @app.route("/schedule/add", methods=["POST"])
 @login_required(("admin", "superadmin"))
 def schedule_add():
@@ -339,6 +416,121 @@ def users_add():
     flash(t("user_created", session.get("lang", "zh")).format(
         name=request.form["full_name"], pw=default_pw), "success")
     return redirect(url_for("users"))
+
+
+@app.route("/users/import", methods=["POST"])
+@login_required(("admin", "superadmin"))
+def users_import():
+    """從 Excel 批次匯入人員（欄位：username, full_name, employee_no, department, unit, duty, job_title, hire_date）。"""
+    import secrets, string
+    from io import BytesIO
+    from openpyxl import load_workbook
+
+    f = request.files.get("file")
+    if not f or not f.filename:
+        flash(t("import_no_file", session.get("lang", "zh")), "warning")
+        return redirect(url_for("users"))
+    try:
+        wb = load_workbook(BytesIO(f.read()), read_only=True)
+        ws = wb.active
+        rows = list(ws.iter_rows(values_only=True))
+    except Exception:
+        flash(t("import_bad_file", session.get("lang", "zh")), "warning")
+        return redirect(url_for("users"))
+
+    if not rows:
+        flash(t("import_empty", session.get("lang", "zh")), "warning")
+        return redirect(url_for("users"))
+
+    # 解析標題列（支援繁中/英欄位名）
+    header = [str(c).strip().lower() if c else "" for c in rows[0]]
+    col_map = {}
+    aliases = {
+        "username": {"username", "帳號", "帳號id", "id"},
+        "full_name": {"full_name", "姓名", "name", "員工姓名"},
+        "employee_no": {"employee_no", "員工編號", "員工號", "employee no", "no"},
+        "department": {"department", "部門", "dept"},
+        "unit": {"unit", "單位"},
+        "duty": {"duty", "職務"},
+        "job_title": {"job_title", "職稱", "title"},
+        "hire_date": {"hire_date", "到職日期", "到職日", "入職日期", "入職日", "member since"},
+    }
+    for i, h in enumerate(header):
+        for key, names in aliases.items():
+            if h in names:
+                col_map[key] = i
+                break
+
+    if "username" not in col_map or "full_name" not in col_map:
+        flash(t("import_bad_header", session.get("lang", "zh")), "warning")
+        return redirect(url_for("users"))
+
+    def cell(row, key):
+        i = col_map.get(key)
+        if i is None or i >= len(row):
+            return None
+        v = row[i]
+        if v is None:
+            return None
+        if hasattr(v, "strftime"):
+            return v.strftime("%Y-%m-%d")
+        return str(v).strip() or None
+
+    alphabet = string.ascii_letters + string.digits
+    db = get_db()
+    added, skipped = 0, 0
+    pw_list = []
+    for row in rows[1:]:
+        uname = cell(row, "username")
+        fname = cell(row, "full_name")
+        if not uname or not fname:
+            continue
+        existing = db.execute("SELECT id FROM users WHERE username=?", (uname,)).fetchone()
+        if existing:
+            skipped += 1
+            continue
+        default_pw = "".join(secrets.choice(alphabet) for _ in range(8))
+        try:
+            db.execute(
+                """INSERT INTO users (username,password_hash,full_name,role,
+                                      employee_no,department,unit,duty,job_title,hire_date)
+                   VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                (uname, hash_pw(default_pw), fname, "staff",
+                 cell(row, "employee_no"), cell(row, "department"),
+                 cell(row, "unit"), cell(row, "duty"),
+                 cell(row, "job_title"), cell(row, "hire_date")))
+            added += 1
+            pw_list.append(f"{fname}:{default_pw}")
+        except Exception:
+            skipped += 1
+    db.commit()
+    db.close()
+    flash(t("import_done", session.get("lang", "zh")).format(
+        added=added, skipped=skipped), "success")
+    if pw_list:
+        flash(t("import_pw_list", session.get("lang", "zh")).format(
+            pw_list="、".join(pw_list[:10])), "info")
+    return redirect(url_for("users"))
+
+
+@app.route("/users/template")
+@login_required(("admin", "superadmin"))
+def users_template():
+    """下載人員匯入 Excel 範本。"""
+    from io import BytesIO
+    from openpyxl import Workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "人員匯入"
+    ws.append(["username", "full_name", "employee_no", "department",
+               "unit", "duty", "job_title", "hire_date"])
+    ws.append(["alice", "王小明", "G1001", "客運組", "", "", "", "2024-01-01"])
+    bio = BytesIO()
+    wb.save(bio)
+    bio.seek(0)
+    return send_file(
+        bio, as_attachment=True, download_name="staff_import_template.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 
 @app.route("/users/set-role/<int:uid>/<newrole>")

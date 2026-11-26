@@ -38,6 +38,16 @@
 </div>
 
 <div class="card">
+  <h2>{{ T('import_users') }}</h2>
+  <p class="muted">username · full_name · employee_no · department · unit · duty · job_title · hire_date</p>
+  <form method="post" action="{{ url_for('users_import') }}" enctype="multipart/form-data" class="form-row">
+    <input type="file" name="file" accept=".xlsx" required>
+    <button class="btn btn-green" type="submit">📤 {{ T('import_users') }}</button>
+    <a href="{{ url_for('users_template') }}" class="btn btn-gray">📄 {{ T('download_template') }}</a>
+  </form>
+</div>
+
+<div class="card">
   <div class="table-wrap">
   <table>
     <thead><tr>

@@ -7,6 +7,9 @@
     <label>{{ T('date') }}</label>
     <input type="date" name="date" value="{{ date }}" style="flex:0 1 200px;">
     <button class="btn btn-blue" type="submit">🔍 {{ T('view') }}</button>
+    {% if is_admin %}
+    <a href="{{ url_for('schedule_export', date=date) }}" class="btn btn-green">📥 {{ T('export_excel') }}</a>
+    {% endif %}
   </form>
 </div>
 
