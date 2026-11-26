@@ -5,6 +5,7 @@ from datetime import datetime
 from pathlib import Path
 
 DB_PATH = Path(os.environ.get("SCHED_DB", Path(__file__).parent / "scheduling.db"))
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
 def get_db():
