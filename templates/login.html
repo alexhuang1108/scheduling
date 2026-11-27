@@ -4,15 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ site_name }}</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
   <style>
     * { box-sizing:border-box; }
     body { font-family:"Noto Sans CJK TC","Noto Sans JP","Microsoft JhengHei",sans-serif;
            background:linear-gradient(135deg,#16314f 0%,#1e3a5f 45%,#2d5a8f 100%);
            display:flex; align-items:center; justify-content:center;
            min-height:100vh; margin:0; padding:16px; }
-    body::before { content:"📅"; position:fixed; font-size:340px; opacity:.05;
-                   color:#fff; right:-40px; bottom:-60px; transform:rotate(-12deg);
-                   pointer-events:none; }
+    body::before { content:""; position:fixed; width:340px; height:340px; right:-40px; bottom:-40px; opacity:.05;
+      background:url("{{ url_for('static', filename='favicon.png') }}") no-repeat center/contain; pointer-events:none; }
     .box { background:#fff; padding:34px 30px; border-radius:18px; width:100%;
            max-width:390px; box-shadow:0 20px 60px rgba(0,0,0,.35);
            position:relative; z-index:1; }
@@ -53,7 +53,7 @@
 </head>
 <body>
   <div class="box">
-    <div class="logo">📅</div>
+    <div class="logo"><img src="{{ url_for('static', filename='favicon.png') }}" alt="" style="width:44px;height:44px;object-fit:contain;"></div>
     <h1>{{ site_name }}</h1>
     <div class="sub">{{ site_sub }}</div>
 

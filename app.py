@@ -54,7 +54,10 @@ def inject_i18n():
 
 @app.route("/favicon.ico")
 def favicon():
-    return ("", 204)
+    from flask import send_from_directory
+    return send_from_directory(
+        os.path.join(app.root_path, "static"), "favicon.png",
+        mimetype="image/png")
 
 
 @app.route("/lang/<code>")
