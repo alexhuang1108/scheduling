@@ -14,6 +14,9 @@
       <label>{{ T('site_sub_label') }}</label>
       <input name="site_sub" value="{{ current.site_sub }}" maxlength="60">
     </div>
+    <div class="form-row">
+      <label><input type="checkbox" name="site_sub_on" {% if current.site_sub_on %}checked{% endif %}> {{ T('site_sub_show') }}</label>
+    </div>
 
     <h2 style="margin-top:18px;">{{ T('module_rename') }}</h2>
     <p class="muted">{{ T('module_rename_hint') }}</p>

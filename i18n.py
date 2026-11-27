@@ -20,6 +20,7 @@ I18N = {
     "site_identity_hint": {"zh": "自訂系統標題與副標，會顯示在登入頁與瀏覽器標題。", "en": "Customize the system title and subtitle shown on the login page and browser title.", "ja": "ログインページとブラウザタイトルに表示されるシステム名とサブタイトルをカスタマイズします。"},
     "site_name_label": {"zh": "系統名稱", "en": "System name", "ja": "システム名"},
     "site_sub_label": {"zh": "系統副標", "en": "Subtitle", "ja": "サブタイトル"},
+    "site_sub_show": {"zh": "在登入頁顯示副標", "en": "Show subtitle on login page", "ja": "ログインページにサブタイトルを表示"},
     "module_rename": {"zh": "模組名稱自訂", "en": "Module Names", "ja": "モジュール名称"},
     "module_rename_hint": {"zh": "修改導覽列各模組的顯示名稱；留空則還原預設。", "en": "Rename navigation modules; leave blank to restore defaults.", "ja": "ナビ各モジュールの表示名を変更します。空欄は既定に戻します。"},
     "module_key": {"zh": "模組", "en": "Module", "ja": "モジュール"},

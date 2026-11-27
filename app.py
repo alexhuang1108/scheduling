@@ -47,7 +47,8 @@ def inject_i18n():
         "me_id": session.get("user_id"),
         "unread_count": unread,
         "site_name": get_setting("site_name", "排班管理系統"),
-        "site_sub": get_setting("site_sub", "人員排班管理系統"),
+        "site_sub": get_setting("site_sub", ""),
+        "site_sub_on": get_setting("site_sub_on", "off") == "on",
         "module_names": get_module_names(),
     }
 
@@ -773,7 +774,8 @@ def admin_modules():
     """後台模組管理：最高權限可自訂系統名稱與各模組顯示名稱。"""
     if request.method == "POST":
         set_setting("site_name", request.form.get("site_name", "").strip() or "排班管理系統")
-        set_setting("site_sub", request.form.get("site_sub", "").strip() or "人員排班管理系統")
+        set_setting("site_sub", request.form.get("site_sub", "").strip())
+        set_setting("site_sub_on", "on" if request.form.get("site_sub_on") else "off")
         for key in MODULE_LABELS:
             val = request.form.get("module:" + key, "").strip()
             if val:
@@ -785,7 +787,8 @@ def admin_modules():
         return redirect(url_for("admin_modules"))
     current = {
         "site_name": get_setting("site_name", "排班管理系統"),
-        "site_sub": get_setting("site_sub", "人員排班管理系統"),
+        "site_sub": get_setting("site_sub", ""),
+        "site_sub_on": get_setting("site_sub_on", "off") == "on",
     }
     modules = [(k, get_setting("module_name:" + k, d)) for k, d in MODULE_LABELS.items()]
     return render_template("admin_modules.html", current=current, modules=modules)

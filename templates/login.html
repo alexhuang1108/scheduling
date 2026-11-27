@@ -55,7 +55,7 @@
   <div class="box">
     <div class="logo"><img src="{{ url_for('static', filename='favicon.png') }}" alt="" style="width:44px;height:44px;object-fit:contain;"></div>
     <h1>{{ site_name }}</h1>
-    <div class="sub">{{ site_sub }}</div>
+    {% if site_sub_on and site_sub %}<div class="sub">{{ site_sub }}</div>{% endif %}
 
     <div class="langbar">
       <a href="/lang/zh" class="{{ 'on' if session.get('lang','zh')=='zh' else '' }}">繁體中文</a>
