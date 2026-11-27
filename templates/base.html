@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}{{ T('app_name') }}{% endblock %}</title>
+  <title>{% block title %}{{ site_name }}{% endblock %}</title>
   <style>
     :root {
       --primary:#1e3a5f; --primary-2:#2d4a73; --accent:#2563eb; --accent-2:#1d4ed8;
@@ -143,23 +143,24 @@
 </head>
 <body>
   <nav>
-    <span class="brand"><span class="logo">✈</span>{{ T('app_name') }}</span>
+    <span class="brand"><span class="logo">✈</span>{{ site_name }}</span>
     {% set ep = request.endpoint or '' %}
-    <a class="navlink {{ 'active' if ep=='index' }}" href="{{ url_for('index') }}">{{ T('nav_dashboard') }}</a>
-    <a class="navlink {{ 'active' if ep=='schedule' }}" href="{{ url_for('schedule') }}">{{ T('nav_schedule') }}</a>
-    <a class="navlink {{ 'active' if ep=='my_schedule' }}" href="{{ url_for('my_schedule') }}">{{ T('nav_mine') }}</a>
-    <a class="navlink {{ 'active' if ep in ('leave','leave_apply','leave_review') }}" href="{{ url_for('leave') }}">{{ T('nav_leave') }}</a>
-    <a class="navlink {{ 'active' if ep in ('messages','messages_send','messages_read') }}" href="{{ url_for('messages') }}">{{ T('nav_messages') }}{% if unread_count %}<span class="badge">{{ unread_count }}</span>{% endif %}</a>
-    <a class="navlink {{ 'active' if ep in ('profile',) }}" href="{{ url_for('profile') }}">🪪 {{ T('nav_profile') }}</a>
-    <a class="navlink {{ 'active' if ep=='my_settings' }}" href="{{ url_for('my_settings') }}">{{ T('nav_my_settings') }}</a>
+    <a class="navlink {{ 'active' if ep=='index' }}" href="{{ url_for('index') }}">{{ module_names['nav_dashboard'] }}</a>
+    <a class="navlink {{ 'active' if ep=='schedule' }}" href="{{ url_for('schedule') }}">{{ module_names['nav_schedule'] }}</a>
+    <a class="navlink {{ 'active' if ep=='my_schedule' }}" href="{{ url_for('my_schedule') }}">{{ module_names['nav_mine'] }}</a>
+    <a class="navlink {{ 'active' if ep in ('leave','leave_apply','leave_review') }}" href="{{ url_for('leave') }}">{{ module_names['nav_leave'] }}</a>
+    <a class="navlink {{ 'active' if ep in ('messages','messages_send','messages_read') }}" href="{{ url_for('messages') }}">{{ module_names['nav_messages'] }}{% if unread_count %}<span class="badge">{{ unread_count }}</span>{% endif %}</a>
+    <a class="navlink {{ 'active' if ep in ('profile',) }}" href="{{ url_for('profile') }}">🪪 {{ module_names['nav_profile'] }}</a>
+    <a class="navlink {{ 'active' if ep=='my_settings' }}" href="{{ url_for('my_settings') }}">{{ module_names['nav_my_settings'] }}</a>
     {% if is_admin %}
-      <a class="navlink {{ 'active' if ep in ('users','users_add','users_toggle','users_reset_pw','users_set_role') }}" href="{{ url_for('users') }}">{{ T('nav_users') }}</a>
-      <a class="navlink {{ 'active' if ep=='settings' }}" href="{{ url_for('settings') }}">{{ T('nav_settings') }}</a>
+      <a class="navlink {{ 'active' if ep in ('users','users_add','users_toggle','users_reset_pw','users_set_role') }}" href="{{ url_for('users') }}">{{ module_names['nav_users'] }}</a>
+      <a class="navlink {{ 'active' if ep=='settings' }}" href="{{ url_for('settings') }}">{{ module_names['nav_settings'] }}</a>
       <a class="navlink {{ 'active' if ep in ('avatar_requests','avatar_review') }}" href="{{ url_for('avatar_requests') }}">{{ T('avatar_requests') }}</a>
     {% endif %}
     {% if is_super %}
       <a class="navlink {{ 'active' if ep in ('org','org_add','org_delete') }}" href="{{ url_for('org') }}">{{ T('org_data') }}</a>
-      <a class="navlink {{ 'active' if ep=='login_logs' }}" href="{{ url_for('login_logs') }}">{{ T('nav_logs') }}</a>
+      <a class="navlink {{ 'active' if ep=='login_logs' }}" href="{{ url_for('login_logs') }}">{{ module_names['nav_logs'] }}</a>
+      <a class="navlink {{ 'active' if ep in ('admin_modules',) }}" href="{{ url_for('admin_modules') }}">🧩 {{ T('nav_modules') }}</a>
     {% endif %}
     <span class="spacer"></span>
     <a class="who" href="{{ url_for('profile') }}" title="{{ T('profile') }}">

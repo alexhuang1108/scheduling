@@ -10,7 +10,7 @@ from flask import (
     session, flash, jsonify, send_file
 )
 
-from models import get_db, init_db, get_setting, set_setting, log_login
+from models import get_db, init_db, get_setting, set_setting, log_login, get_module_names, MODULE_LABELS
 from i18n import t, LANGS, LANG_NAMES
 
 app = Flask(__name__)
@@ -46,6 +46,9 @@ def inject_i18n():
         "is_staff": session.get("role") == "staff",
         "me_id": session.get("user_id"),
         "unread_count": unread,
+        "site_name": get_setting("site_name", "排班管理系統"),
+        "site_sub": get_setting("site_sub", "人員排班管理系統"),
+        "module_names": get_module_names(),
     }
 
 
@@ -759,6 +762,30 @@ def settings():
     quick = get_setting("quick_login", "off") == "on"
     method = get_setting("quick_method", "screen")
     return render_template("settings.html", quick=quick, method=method)
+
+
+@app.route("/admin/modules", methods=["GET", "POST"])
+@login_required("superadmin")
+def admin_modules():
+    """後台模組管理：最高權限可自訂系統名稱與各模組顯示名稱。"""
+    if request.method == "POST":
+        set_setting("site_name", request.form.get("site_name", "").strip() or "排班管理系統")
+        set_setting("site_sub", request.form.get("site_sub", "").strip() or "人員排班管理系統")
+        for key in MODULE_LABELS:
+            val = request.form.get("module:" + key, "").strip()
+            if val:
+                set_setting("module_name:" + key, val)
+            else:
+                # 留空 = 還原預設
+                set_setting("module_name:" + key, MODULE_LABELS[key])
+        flash(t("saved", session.get("lang", "zh")), "success")
+        return redirect(url_for("admin_modules"))
+    current = {
+        "site_name": get_setting("site_name", "排班管理系統"),
+        "site_sub": get_setting("site_sub", "人員排班管理系統"),
+    }
+    modules = [(k, get_setting("module_name:" + k, d)) for k, d in MODULE_LABELS.items()]
+    return render_template("admin_modules.html", current=current, modules=modules)
 
 
 # ---------- 登入紀錄（僅最高權限）----------

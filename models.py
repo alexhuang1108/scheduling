@@ -274,6 +274,29 @@ def set_setting(key, value):
     conn.close()
 
 
+# 可模組化的導覽/模組顯示名稱（key -> 預設名稱）
+MODULE_LABELS = {
+    "nav_dashboard": "儀表板",
+    "nav_schedule": "總排班表",
+    "nav_mine": "我的班表",
+    "nav_leave": "休假申請",
+    "nav_messages": "訊息",
+    "nav_profile": "個人資訊卡",
+    "nav_my_settings": "我的設定",
+    "nav_users": "人員管理",
+    "nav_settings": "系統設定",
+    "nav_logs": "登入紀錄",
+}
+
+
+def get_module_names():
+    """取得各模組的自訂顯示名稱（未設定則回傳預設）。"""
+    result = {}
+    for key, default in MODULE_LABELS.items():
+        result[key] = get_setting("module_name:" + key, default)
+    return result
+
+
 def log_login(user_id=None, username=None, full_name=None, role=None,
               action="login", method="password", ip=None, user_agent=None, lang=None):
     conn = get_db()

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>地勤排班系統</title>
+  <title>{{ site_name }}</title>
   <style>
     * { box-sizing:border-box; }
     body { font-family:"Noto Sans CJK TC","Noto Sans JP","Microsoft JhengHei",sans-serif;
@@ -54,8 +54,8 @@
 <body>
   <div class="box">
     <div class="logo">✈</div>
-    <h1>地勤排班系統</h1>
-    <div class="sub">航空地勤人員排班管理</div>
+    <h1>{{ site_name }}</h1>
+    <div class="sub">{{ site_sub }}</div>
 
     <div class="langbar">
       <a href="/lang/zh" class="{{ 'on' if session.get('lang','zh')=='zh' else '' }}">繁體中文</a>

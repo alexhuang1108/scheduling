@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1><span class="ico">🧩</span>{{ T('nav_modules') }}</h1></div>
+
+<div class="card">
+  <h2>{{ T('site_identity') }}</h2>
+  <p class="muted">{{ T('site_identity_hint') }}</p>
+  <form method="post">
+    <div class="form-row">
+      <label>{{ T('site_name_label') }}</label>
+      <input name="site_name" value="{{ current.site_name }}" maxlength="40">
+    </div>
+    <div class="form-row">
+      <label>{{ T('site_sub_label') }}</label>
+      <input name="site_sub" value="{{ current.site_sub }}" maxlength="60">
+    </div>
+
+    <h2 style="margin-top:18px;">{{ T('module_rename') }}</h2>
+    <p class="muted">{{ T('module_rename_hint') }}</p>
+    <table>
+      <thead><tr><th>{{ T('module_key') }}</th><th>{{ T('module_display') }}</th></tr></thead>
+      <tbody>
+      {% for key, name in modules %}
+      <tr>
+        <td><code>{{ key }}</code></td>
+        <td><input name="module:{{ key }}" value="{{ name }}" maxlength="20" style="max-width:240px;"></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="form-row" style="margin-top:14px;">
+      <button class="btn btn-green" type="submit">💾 {{ T('save') }}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
