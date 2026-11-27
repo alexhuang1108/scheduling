@@ -143,7 +143,7 @@
 </head>
 <body>
   <nav>
-    <span class="brand"><span class="logo">✈</span>{{ site_name }}</span>
+    <span class="brand"><span class="logo">📅</span>{{ site_name }}</span>
     {% set ep = request.endpoint or '' %}
     <a class="navlink {{ 'active' if ep=='index' }}" href="{{ url_for('index') }}">{{ module_names['nav_dashboard'] }}</a>
     <a class="navlink {{ 'active' if ep=='schedule' }}" href="{{ url_for('schedule') }}">{{ module_names['nav_schedule'] }}</a>
